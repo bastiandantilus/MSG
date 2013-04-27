@@ -17,38 +17,18 @@
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="stylesheet" href="css/reset.css" />
+		<script src="js/MSG.js"></script>
+		<script src="js/smooth_dragging.js"></script>
 		<script>
       document.addEventListener("DOMContentLoaded", function() {
         document.removeEventListener("DOMContentLoaded", arguments.callee, false);
-        init();
-        console.log("loaded");
+        canvas_fit();
       }, false);
-      
-      function init() {
-      	canvas_fit();
-      }
-      function canvas_fit() {
-        var canvas = document.getElementById("mainCanvas");
-
-        canvas.width = document.width;
-        canvas.height = document.height - 100;
-        var canvasW = canvas.width;
-        var canvasH = canvas.height;
-
-        if (canvas.getContext) {
-          var ctx = canvas.getContext("2d");
-          ctx.rect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = "#CCFFCC";
-          ctx.fill();
-          //setup();
-          //setInterval(run, 33);
-        }
-      }
-
+      window.addEventListener("load", windowLoadHandler, false);
 		</script>
 	</head>
 
-	<body>
+	<body style="text-align:center;">
 		<canvas id="mainCanvas">
 			Do you have canvas disabled? Or just using a non-modern browser? That's sad. :&lpar;
 		</canvas>
