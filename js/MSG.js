@@ -115,7 +115,10 @@ function canvasApp() {
 
       //Randomize the color gradient. We will select a random color and set the center of the gradient to white.
       //We will only allow the color components to be as large as 200 (rather than the max 255) to create darker colors.
-      var seed = (Math.floor(Math.random() * numColors) + 1) / numColors;
+      var suit = (Math.floor(Math.random() * numColors) + 1);
+      var rank = (Math.floor(Math.random() * numColors) + 1);
+       
+      var seed = suit / numColors;
       h1 = Math.floor(seed * 375) - (300 / numColors);
       s1 = 50 + seed * 40;
       l1 = 50 + seed * numColors;
@@ -132,7 +135,9 @@ function canvasApp() {
         y : tempY,
         rad : tempRad,
         gradColor1 : color1,
-        gradColor2 : color2
+        gradColor2 : color2,
+        suit : suit,
+        rank : rank
       };
       shapes.push(tempShape);
     }
@@ -207,19 +212,12 @@ function canvasApp() {
   }
 
   function onTimerTick() {
-    repositionShapes();
-    /*
-     Because of reordering, the dragging shape is the last one in the array.
-     The code below moves this shape only a portion of the distance towards the current "target" position, and
-     because this code is being executed inside a function called by a timer, the object will continue to
-     move closer and closer to the target position.
-     The amount to move towards the target position is set in the parameter 'easeAmount', which should range between
-     0 and 1. The target position is set by the mouse position as it is dragging.
-     */
+    repositionShapes(); // Resets shapes to proper locations
 
+    // Moves selected shape in direction dragged, exactly one space
     if (Math.abs(targetX - getX(dragIndex)) > Math.abs(targetY - getY(dragIndex))) {
       if (targetX < getX(dragIndex) && targetX > baseX) {
-        shapes[dragIndex].x = getX(dragIndex) - radius * 3;
+        shapes[dragIndex].x = Math.max(targetX, getX(dragIndex) - radius * 3);
         shapes[dragIndex - 1].x = getX(dragIndex);
       }
 
@@ -327,6 +325,11 @@ function canvasApp() {
     context.arc(x, y, rad, 0, 2 * Math.PI, false);
     context.closePath();
     context.fill();
+    context.font = "400 'Caesar+Dressing'";
+    context.fillStyle = "black";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(shapes[i].rank, shapes[i].x, shapes[i].y);
 
   }
 
