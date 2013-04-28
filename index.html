@@ -19,7 +19,6 @@
 		<link rel="stylesheet" href="css/reset.css" />
 		<script src="js/MSG.js"></script>
 		<script src="js/smooth_dragging.js"></script>
-		<script src="js/match3.js"></script>
 		<script>
       document.addEventListener("DOMContentLoaded", function() {
         document.removeEventListener("DOMContentLoaded", arguments.callee, false);
@@ -27,27 +26,28 @@
       }, false);
       window.addEventListener("load", windowLoadHandler, false);
 		</script>
+		
+		<style>
+			nav { width: 100%; }
+			nav p { display: inline-block; }
+		</style>
 	</head>
 
 	<body style="text-align:center;">
-		<canvas id="mainCanvas">
-			Do you have canvas disabled? Or just using a non-modern browser? That's sad. :&lpar;
-		</canvas>
 		<div>
 			<header>
 				<h1>MSG</h1>
 			</header>
 			<nav>
 				<p>
-					<a href="/">Home</a>
-				</p>
-				<p>
-					<a href="/contact">Contact</a>
+					<a href="./">Home</a>
 				</p>
 			</nav>
 
 			<div>
-
+				<canvas id="mainCanvas">
+					Do you have canvas disabled? Or just using an old browser? That's sad. :&lpar;
+				</canvas>
 			</div>
 
 			<footer>
