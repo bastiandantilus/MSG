@@ -11,13 +11,14 @@ function canvas_fit() {
 
   if (canvas.getContext) {
     var ctx = canvas.getContext("2d");
-    ctx.rect(0, 0, canvas.width, canvas.height);
+    /* ctx.rect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#CCFFCC";
-    ctx.fill();
+    ctx.fill(); */
     //setup();
-    //setInterval(run, 33);
   }
 }
+
+window.onresize = canvas_fit;
 
 //JavaScript HTML5 Canvas example by Dan Gries, rectangleworld.com.
 //The basic setup here, including the debugging code and window load listener, is copied from 'HTML5 Canvas' by Fulton & Fulton.
@@ -93,6 +94,7 @@ function canvasApp() {
     var r1;
     var g1;
     var b1;
+    var numColors = 4;
     var color1;
     var r2;
     var g2;
@@ -100,31 +102,30 @@ function canvasApp() {
     var color2;
     var tempGrad;
     var gradFactor = 2;
-    var radius = 20;
-    var baseX = 64;
-    var baseY = 64;
+    var shape_count = 8;
+    var radius = theCanvas.width / (3*(shape_count+1));
+    var baseX = radius*2;
+    var baseY = radius*2;
     for ( i = 0; i < numShapes; i++) {
       //tempRad = 5 + Math.floor(Math.random() * 20);
       tempRad = radius;
       //position
-      tempX = (i % 8) * radius * 3 + baseX;
-      tempY = Math.floor(i / 8) * radius * 3 + baseY;
+      tempX = (i % shape_count) * radius * 3 + baseX;
+      tempY = Math.floor(i / shape_count) * radius * 3 + baseY;
 
       //Randomize the color gradient. We will select a random color and set the center of the gradient to white.
       //We will only allow the color components to be as large as 200 (rather than the max 255) to create darker colors.
-      color1 = Math.floor(Math.random() * 2);
-      r1 = color1 * 150 + 100;
-      //Math.floor(Math.random()*2) * 100 + 50;
-      g1 = color1 * 50;
-      // Math.floor(Math.random()*2) * 100 + 50;
-      b1 = (1 - color1) * 150 + 50;
-      // Math.floor(Math.random()*2) * 100 + 50;
-      color1 = "rgb(" + r1 + "," + g1 + "," + b1 + ")";
+      var seed = (Math.floor(Math.random() * numColors) + 1) / numColors;
+      h1 = Math.floor(seed * 300) - (300 / numColors);
+      s1 = 50 + seed * 40; 
+      l1 = 50 + seed * numColors; 
+      color1 = "hsl(" + h1 + "," + s1 + "%," + l1 + "%)";
+      console.log(color1);
 
-      r2 = Math.min(Math.floor(gradFactor * r1), 255);
-      g2 = Math.min(Math.floor(gradFactor * g1), 255);
-      b2 = Math.min(Math.floor(gradFactor * b1), 255);
-      color2 = "rgb(" + r2 + "," + g2 + "," + b2 + ")";
+      h2 = h1 + 20;
+      s2 = Math.min(Math.floor(gradFactor * s1), 100);
+      l2 = Math.min(Math.floor(gradFactor * l1), 75);
+      color2 = "hsl(" + h2 + "," + s2 + "%," + l2 + "%)";
 
       tempShape = {
         x : tempX,
@@ -143,7 +144,7 @@ function canvasApp() {
       tempX = (i % 8) * radius * 3 + baseX;
       tempY = Math.floor(i / 8) * radius * 3 + baseY;
       shapes[i].x = tempX;
-      shapes[i].y = tempY;      
+      shapes[i].y = tempY;
     }
   }
 
@@ -206,6 +207,7 @@ function canvasApp() {
      The amount to move towards the target position is set in the parameter 'easeAmount', which should range between
      0 and 1. The target position is set by the mouse position as it is dragging.
      */
+
     shapes[numShapes - 1].x = shapes[numShapes - 1].x + easeAmount * (targetX - shapes[numShapes - 1].x);
     shapes[numShapes - 1].y = shapes[numShapes - 1].y + easeAmount * (targetY - shapes[numShapes - 1].y);
 
