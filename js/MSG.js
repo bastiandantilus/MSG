@@ -102,10 +102,10 @@ function canvasApp() {
     var color2;
     var tempGrad;
     var gradFactor = 2;
-    var shape_count = 8;
-    var radius = theCanvas.width / (3*(shape_count+1));
-    var baseX = radius*2;
-    var baseY = radius*2;
+    shape_count = 8;
+    radius = theCanvas.width / (3 * (shape_count + 1));
+    baseX = radius * 2;
+    baseY = radius * 2;
     for ( i = 0; i < numShapes; i++) {
       //tempRad = 5 + Math.floor(Math.random() * 20);
       tempRad = radius;
@@ -116,11 +116,11 @@ function canvasApp() {
       //Randomize the color gradient. We will select a random color and set the center of the gradient to white.
       //We will only allow the color components to be as large as 200 (rather than the max 255) to create darker colors.
       var seed = (Math.floor(Math.random() * numColors) + 1) / numColors;
-      h1 = Math.floor(seed * 300) - (300 / numColors);
-      s1 = 50 + seed * 40; 
-      l1 = 50 + seed * numColors; 
+      h1 = Math.floor(seed * 375) - (300 / numColors);
+      s1 = 50 + seed * 40;
+      l1 = 50 + seed * numColors;
       color1 = "hsl(" + h1 + "," + s1 + "%," + l1 + "%)";
-      console.log(color1);
+      //console.log(color1);
 
       h2 = h1 + 20;
       s2 = Math.min(Math.floor(gradFactor * s1), 100);
@@ -141,14 +141,22 @@ function canvasApp() {
   function repositionShapes() {
     for ( i = 0; i < numShapes; i++) {
       //position
-      tempX = (i % 8) * radius * 3 + baseX;
-      tempY = Math.floor(i / 8) * radius * 3 + baseY;
-      shapes[i].x = tempX;
-      shapes[i].y = tempY;
+      shapes[i].x = getX(i);
+      shapes[i].y = getY(i);
     }
+    drawShapes();
+  }
+
+  function getX(i) {
+    return (i % shape_count) * radius * 3 + baseX;
+  }
+
+  function getY(i) {
+    return Math.floor(i / shape_count) * radius * 3 + baseY;
   }
 
   function mouseDownListener(evt) {
+    repositionShapes();
     var i;
 
     //getting mouse position correctly
@@ -170,11 +178,11 @@ function canvasApp() {
 
       //We now place the currently dragged shape on top by reordering the array which holds these objects.
       //We 'splice' out this array element, then 'push' it back into the array at the end.
-      shapes.push(shapes.splice(dragIndex,1)[0]);
+      //shapes.push(shapes.splice(dragIndex,1)[0]);
 
       //shape to drag is now last one in array. We read record the point on this object where the mouse is "holding" it:
-      dragHoldX = mouseX - shapes[numShapes - 1].x;
-      dragHoldY = mouseY - shapes[numShapes - 1].y;
+      dragHoldX = mouseX - shapes[dragIndex].x;
+      dragHoldY = mouseY - shapes[dragIndex].y;
 
       //The "target" position is where the object should be if it were to move there instantaneously. But we will
       //set up the code so that this target position is approached gradually, producing a smooth motion.
@@ -199,6 +207,7 @@ function canvasApp() {
   }
 
   function onTimerTick() {
+    repositionShapes();
     /*
      Because of reordering, the dragging shape is the last one in the array.
      The code below moves this shape only a portion of the distance towards the current "target" position, and
@@ -208,8 +217,32 @@ function canvasApp() {
      0 and 1. The target position is set by the mouse position as it is dragging.
      */
 
-    shapes[numShapes - 1].x = shapes[numShapes - 1].x + easeAmount * (targetX - shapes[numShapes - 1].x);
-    shapes[numShapes - 1].y = shapes[numShapes - 1].y + easeAmount * (targetY - shapes[numShapes - 1].y);
+    if (Math.abs(targetX - getX(dragIndex)) > Math.abs(targetY - getY(dragIndex))) {
+      if (targetX < getX(dragIndex) && targetX > baseX) {
+        shapes[dragIndex].x = getX(dragIndex) - radius * 3;
+        shapes[dragIndex - 1].x = getX(dragIndex);
+      }
+
+      if (targetX > getX(dragIndex) && targetX < shape_count * (radius * 3) - radius) {
+        shapes[dragIndex].x = getX(dragIndex) + radius * 3;
+        shapes[dragIndex + 1].x = getX(dragIndex);
+      }
+
+    } else {
+      if (targetY < getY(dragIndex) && targetY > baseY) {
+        shapes[dragIndex].y = getY(dragIndex) - radius * 3;
+        shapes[dragIndex - shape_count].y = getY(dragIndex);
+      }
+
+      if (targetY > getY(dragIndex) && targetY < shape_count * (radius * 3) - radius) {
+        shapes[dragIndex].y = getY(dragIndex) + radius * 3;
+        shapes[dragIndex + shape_count].y = getY(dragIndex);
+      }
+
+    }
+
+    //shapes[numShapes - 1].x = shapes[numShapes - 1].x + easeAmount * (targetX - shapes[numShapes - 1].x);
+    //shapes[numShapes - 1].y = shapes[numShapes - 1].y + easeAmount * (targetY - shapes[numShapes - 1].y);
 
     //stop the timer when the target position is reached (close enough)
     if ((!dragging) && (Math.abs(shapes[numShapes - 1].x - targetX) < 0.1) && (Math.abs(shapes[numShapes - 1].y - targetY) < 0.1)) {
@@ -265,32 +298,45 @@ function canvasApp() {
 
   function drawShapes() {
     var i;
+    for ( i = 0; i < numShapes; i++) {
+      drawShape(i, false);
+    }
+    if (dragging) {
+      drawShape(dragIndex, true);
+    }
+  }
+
+  function drawShape(i, top) {
     var grad;
     var x;
     var y;
     var rad;
-    for ( i = 0; i < numShapes; i++) {
-      //define gradient
-      rad = shapes[i].rad;
-      x = shapes[i].x;
-      y = shapes[i].y;
-      grad = context.createRadialGradient(x - 0.33 * rad, y - 0.33 * rad, 0, x - 0.33 * rad, y - 0.33 * rad, 1.33 * rad);
-      grad.addColorStop(0, shapes[i].gradColor2);
-      grad.addColorStop(1, shapes[i].gradColor1);
-
-      context.fillStyle = grad;
-      context.beginPath();
-      context.arc(x, y, rad, 0, 2 * Math.PI, false);
-      context.closePath();
-      context.fill();
+    //define gradient
+    rad = shapes[i].rad;
+    if (top) {
+      rad += 3;
     }
+    x = shapes[i].x;
+    y = shapes[i].y;
+    grad = context.createRadialGradient(x - 0.33 * rad, y - 0.33 * rad, 0, x - 0.33 * rad, y - 0.33 * rad, 1.33 * rad);
+    grad.addColorStop(0, shapes[i].gradColor2);
+    grad.addColorStop(1, shapes[i].gradColor1);
+
+    context.fillStyle = grad;
+    context.beginPath();
+    context.arc(x, y, rad, 0, 2 * Math.PI, false);
+    context.closePath();
+    context.fill();
+
   }
 
   function drawScreen() {
     //bg
     context.fillStyle = bgColor;
     context.fillRect(0, 0, theCanvas.width, theCanvas.height);
-
+    if (!dragging) {
+      repositionShapes();
+    }
     drawShapes();
   }
 
