@@ -78,6 +78,7 @@ function MSG(rowLength) {"use strict";
     drawScreen();
 
     theCanvas.addEventListener("mousedown", mouseDownListener, false);
+    theCanvas.addEventListener("touchstart", mouseDownListener, false);
 
     check_for_matches(false);
 
@@ -89,6 +90,8 @@ function MSG(rowLength) {"use strict";
 
   function game_over(score, numColors) {
     theCanvas.removeEventListener("mousedown", mouseDownListener, false);
+    theCanvas.removeEventListener("touchstart", mouseDownListener, false);
+    
     setTimeout(function() { clearInterval(timer); }, 1000);
     var header = document.getElementsByTagName("header")[0];
     var div = document.createElement("div");
@@ -222,6 +225,7 @@ function MSG(rowLength) {"use strict";
 
     if (dragging) {
       window.addEventListener("mousemove", mouseMoveListener, false);
+      window.addEventListener("touchmove", mouseMoveListener, false);
 
       //We read record the point on this object where the mouse is "holding" it:
       dragHoldX = mouseX - shapes[dragIndex].x;
@@ -233,7 +237,9 @@ function MSG(rowLength) {"use strict";
       targetY = mouseY - dragHoldY;
     }
     theCanvas.removeEventListener("mousedown", mouseDownListener, false);
+    theCanvas.removeEventListener("touchstart", mouseDownListener, false);
     window.addEventListener("mouseup", mouseUpListener, false);
+    window.addEventListener("touchend", mouseUpListener, false);
 
     //code below prevents the mouse down from having an effect on the main browser window:
     if (evt.preventDefault) {
@@ -296,10 +302,13 @@ function MSG(rowLength) {"use strict";
 
   function mouseUpListener(evt) {
     theCanvas.addEventListener("mousedown", mouseDownListener, false);
+    theCanvas.addEventListener("touchstart", mouseDownListener, false);
     window.removeEventListener("mouseup", mouseUpListener, false);
+    window.removeEventListener("touchend", mouseUpListener, false);
     if (dragging) {
       dragging = false;
       window.removeEventListener("mousemove", mouseMoveListener, false);
+      window.removeEventListener("touchmove", mouseMoveListener, false);
     }
 
     if (swapIndex !== -1 && dragIndex !== -1 && swapIndex != dragIndex) {
