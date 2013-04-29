@@ -53,6 +53,35 @@ function MSG(rowLength) {"use strict";
 
   init();
 
+  var touchToMouse = function(event) {
+    if (event.touches.length > 1)
+      return;
+    //allow default multi-touch gestures to work
+    var touch = event.changedTouches[0];
+    var type = "";
+
+    switch (event.type) {
+      case "touchstart":
+        type = "mousedown";
+        break;
+      case "touchmove":
+        type = "mousemove";
+        break;
+      case "touchend":
+        type = "mouseup";
+        break;
+      default:
+        return;
+    }
+
+    // https://developer.mozilla.org/en/DOM/event.initMouseEvent for API
+    var simulatedEvent = document.createEvent("MouseEvent");
+    simulatedEvent.initMouseEvent(type, true, true, window, 1, touch.screenX, touch.screenY, touch.clientX, touch.clientY, false, false, false, false, 0, null);
+
+    touch.target.dispatchEvent(simulatedEvent);
+    event.preventDefault();
+  };
+
   function init() {
     canvas_fit();
     numShapes = rowLength * rowLength;
@@ -78,7 +107,7 @@ function MSG(rowLength) {"use strict";
     drawScreen();
 
     theCanvas.addEventListener("mousedown", mouseDownListener, false);
-    theCanvas.addEventListener("touchstart", mouseDownListener, false);
+    theCanvas.addEventListener("touchstart", touchToMouse, false);
 
     check_for_matches(false);
 
@@ -90,9 +119,11 @@ function MSG(rowLength) {"use strict";
 
   function game_over(score, numColors) {
     theCanvas.removeEventListener("mousedown", mouseDownListener, false);
-    theCanvas.removeEventListener("touchstart", mouseDownListener, false);
-    
-    setTimeout(function() { clearInterval(timer); }, 1000);
+    theCanvas.removeEventListener("touchstart", touchToMouse, false);
+
+    setTimeout(function() {
+      clearInterval(timer);
+    }, 1000);
     var header = document.getElementsByTagName("header")[0];
     var div = document.createElement("div");
     div.className = 'message';
@@ -225,7 +256,7 @@ function MSG(rowLength) {"use strict";
 
     if (dragging) {
       window.addEventListener("mousemove", mouseMoveListener, false);
-      window.addEventListener("touchmove", mouseMoveListener, false);
+      window.addEventListener("touchmove", touchToMouse, false);
 
       //We read record the point on this object where the mouse is "holding" it:
       dragHoldX = mouseX - shapes[dragIndex].x;
@@ -237,9 +268,9 @@ function MSG(rowLength) {"use strict";
       targetY = mouseY - dragHoldY;
     }
     theCanvas.removeEventListener("mousedown", mouseDownListener, false);
-    theCanvas.removeEventListener("touchstart", mouseDownListener, false);
+    theCanvas.removeEventListener("touchstart", touchToMouse, false);
     window.addEventListener("mouseup", mouseUpListener, false);
-    window.addEventListener("touchend", mouseUpListener, false);
+    window.addEventListener("touchend", touchToMouse, false);
 
     //code below prevents the mouse down from having an effect on the main browser window:
     if (evt.preventDefault) {
@@ -255,7 +286,7 @@ function MSG(rowLength) {"use strict";
   function onTimerTick() {
     repositionShapes();
     // Resets shapes to proper locations
-    console.log("tick");
+    // console.log("tick");
 
     if (dragIndex === -1) {
       return;
@@ -291,7 +322,7 @@ function MSG(rowLength) {"use strict";
       }
     } else {
       swapIndex = dragIndex;
-      if(shapes[dragIndex]) {
+      if (shapes[dragIndex]) {
         shapes[dragIndex].targetX = getX(dragIndex);
         shapes[dragIndex].targetY = getY(dragIndex);
       }
@@ -302,13 +333,13 @@ function MSG(rowLength) {"use strict";
 
   function mouseUpListener(evt) {
     theCanvas.addEventListener("mousedown", mouseDownListener, false);
-    theCanvas.addEventListener("touchstart", mouseDownListener, false);
+    theCanvas.addEventListener("touchstart", touchToMouse, false);
     window.removeEventListener("mouseup", mouseUpListener, false);
-    window.removeEventListener("touchend", mouseUpListener, false);
+    window.removeEventListener("touchend", touchToMouse, false);
     if (dragging) {
       dragging = false;
       window.removeEventListener("mousemove", mouseMoveListener, false);
-      window.removeEventListener("touchmove", mouseMoveListener, false);
+      window.removeEventListener("touchmove", touchToMouse, false);
     }
 
     if (swapIndex !== -1 && dragIndex !== -1 && swapIndex != dragIndex) {
