@@ -18,35 +18,86 @@
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="stylesheet" href="css/reset.css" />
-		
+		<script src="js/howler.min.js"></script>
+
 		<script src="js/MSG.js"></script>
-		<script>
-      document.addEventListener("DOMContentLoaded", function() {
-        document.removeEventListener("DOMContentLoaded", arguments.callee, false);
-        canvas_fit();
-      }, false);
-      window.addEventListener("load", windowLoadHandler, false);
-		</script>
-		
+
 		<style>
-			nav { width: 100%; }
-			nav p { display: inline-block; }
+			body {
+				text-align: center;
+				background: #220022;
+				color: #DDFFDD;
+			}
+			h1 {
+				font: 400 3em 'Caesar Dressing';
+			}
+			.message {
+				font-size: 2em;
+				color: green;
+				font-family: 'Caesar Dressing', fantasy;
+				background: white;
+				display: inline-block;
+				padding: 5px;
+				margin: 5px;
+				border: 3px solid silver;
+				border-radius: 10px;
+			}
+
+			nav {
+				width: 100%;
+			}
+			nav p {
+				display: inline-block;
+			}
+			nav p a {
+				font-size: 1em;
+				color: green;
+				font-family: 'Caesar Dressing', fantasy;
+				background: white;
+				display: inline-block;
+				padding: 5px;
+				margin: 5px;
+				border: 3px solid silver;
+				border-radius: 10px;
+				text-decoration: none;
+			}
+			nav p a:hover {
+				background: yellow;
+				position: relative;
+				bottom: 1px;
+			}
+			
+			#game {
+				border: 3px solid brown;
+				border-radius: 5px;
+				display: inline-block;
+				margin: 0px;
+				padding: 0px;
+				background: brown;
+			}
+
 		</style>
 	</head>
 
-	<body style="text-align:center;">
+	<body>
 		<div>
 			<header>
 				<h1>MSG</h1>
 			</header>
 			<nav>
 				<p>
-					<a href="./">Home</a>
+					<a href="#" onclick="MSG(4); return false; ">Easy</a>
+				</p>
+				<p>
+					<a href="#" onclick="MSG(6); return false; ">Sexy</a>
+				</p>
+				<p>
+					<a href="#" onclick="MSG(8); return false; ">Hard</a>
 				</p>
 			</nav>
 
-			<div>
-				<canvas id="mainCanvas">
+			<div id="game">
+				<canvas id="mainCanvas" style="display: none;">
 					Do you have canvas disabled? Or just using an old browser? That's sad. :&lpar;
 				</canvas>
 			</div>

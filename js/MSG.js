@@ -2,64 +2,44 @@
  * @author Scott Robert Lawrence
  */
 
-function canvas_fit() {
-  var canvas = document.getElementById("mainCanvas");
-
-  canvas.height = canvas.width = Math.min(document.width, document.height - 100);
-  var canvasW = canvas.width;
-  var canvasH = canvas.height;
-
-  if (canvas.getContext) {
-    var ctx = canvas.getContext("2d");
-    /* ctx.rect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#CCFFCC";
-    ctx.fill(); */
-    //setup();
-  }
-}
-
-window.onresize = canvas_fit;
-
-//JavaScript HTML5 Canvas example by Dan Gries, rectangleworld.com.
-//The basic setup here, including the debugging code and window load listener, is copied from 'HTML5 Canvas' by Fulton & Fulton.
-
-//window.addEventListener("load", windowLoadHandler, false);
-
-//The code below establishes a way to send debug messages to the browser JavaScript Console,
-//but in such a way as to ignore errors when the browser doesn't support the JavaScript Console.
-//To log a messages to the console, insert into the code:
-//Debugger.log("my message");
-var Debugger = function() {
+var Debugger = function() {"use strict";
 };
-Debugger.log = function(message) {
+Debugger.log = function() {"use strict";
+  //return;
   try {
-    console.log(message);
+    console.log(arguments);
   } catch (exception) {
     return;
   }
-}
-function windowLoadHandler() {
-  canvasApp();
-}
+};
 
-function canvasSupport() {
+function canvasSupport() {"use strict";
   return true;
   //Modernizr.canvas;
 }
 
-function canvasApp() {
+function MSG(rowLength) {"use strict";
   if (!canvasSupport()) {
     return;
   }
 
+  var sounds = {};
+
   var theCanvas = document.getElementById("mainCanvas");
+  var parent = theCanvas.parentNode;
+  parent.removeChild(theCanvas);
+
+  theCanvas = document.createElement("canvas");
+  theCanvas.id = "mainCanvas";
+  parent.appendChild(theCanvas);
+
   var context = theCanvas.getContext("2d");
 
-  init();
+  var score, failed, paused, valid_moves, numColors, numShapes, rowLength, radius, baseX, baseY, shapes;
 
-  var numShapes;
-  var shapes;
   var dragIndex;
+
+  var swapIndex;
   var dragging;
   var mouseX;
   var mouseY;
@@ -71,96 +51,158 @@ function canvasApp() {
   var easeAmount;
   var bgColor;
 
-  function init() {
-    numShapes = 64;
-    easeAmount = 0.20;
+  init();
 
-    bgColor = "#000000";
+  function init() {
+    canvas_fit();
+    numShapes = rowLength * rowLength;
+    numColors = 4;
+    easeAmount = 0.80;
+
+    bgColor = "#DDDDFF";
 
     shapes = [];
+
+    score = 0;
+
+    failed = false;
+    paused = true;
+
+    valid_moves = {
+      rank : 0,
+      suit : 0
+    };
 
     makeShapes();
 
     drawScreen();
 
     theCanvas.addEventListener("mousedown", mouseDownListener, false);
+
+    check_for_matches(false);
+
+    drawShapes();
+    //start timer
+    timer = setInterval(onTimerTick, 1000 / 30);
+
+  }
+
+  function game_over(score, numColors) {
+    theCanvas.removeEventListener("mousedown", mouseDownListener, false);
+    setTimeout(function() { clearInterval(timer); }, 1000);
+    var header = document.getElementsByTagName("header")[0];
+    var div = document.createElement("div");
+    div.className = 'message';
+    div.setAttribute('onclick', 'this.parentNode.removeChild(this);');
+    div.setAttribute('title', "click to close");
+    if (score > 0) {
+      div.innerHTML = "Congratulations! You reached level " + numColors + " with a final score of " + score;
+    } else {
+      div.innerHTML = "Game Over! Sorry, you made too many illegal moves.";
+    }
+    header.appendChild(div);
+  }
+
+  function playSound(filename) {
+    if (!sounds[filename]) {
+      sounds[filename] = new Howl({
+        urls : [filename]
+      });
+    }
+    sounds[filename].play();
+  }
+
+  function getRadius() {
+    return theCanvas.width / (3 * (rowLength + 1));
+  }
+
+  function getGrad(suit) {
+    var color1, color2;
+    var tempGrad;
+    var gradFactor = 1.25;
+    var h1, s1, l1, h2, s2, l2;
+
+    var seed = suit / numColors;
+    h1 = Math.floor(seed * 360);
+    s1 = Math.floor(70 + seed * 20);
+    l1 = suit % 2 ? Math.floor(40 + seed * 20) : Math.floor(20 + seed * 40);
+    color1 = "hsl(" + h1 + "," + s1 + "%," + l1 + "%)";
+
+    h2 = h1 + numColors;
+    s2 = Math.floor(Math.min(s1 * gradFactor, 100));
+    l2 = l1 + 20;
+    color2 = "hsl(" + h2 + "," + s2 + "%," + l2 + "%)";
+    //Debugger.log(color1, color2);
+
+    return [color1, color2];
+  }
+
+  function makeShape(i) {
+    var tempX;
+    var tempY;
+    var tempShape;
+    radius = getRadius();
+    baseX = radius * 2;
+    baseY = radius * 2;
+    //position
+    tempX = (i % rowLength) * radius * 3 + baseX;
+    tempY = Math.floor(i / rowLength) * radius * 3 + baseY;
+
+    //Randomize the suit and rank
+    var suit = (Math.floor(Math.random() * numColors) + 1);
+    var rank = (Math.floor(Math.random() * numColors) + 1);
+
+    var grad = getGrad(suit);
+
+    tempShape = {
+      x : tempX,
+      y : tempY,
+      rad : radius,
+      gradColor1 : grad[0],
+      gradColor2 : grad[1],
+      suit : suit,
+      rank : rank,
+      marked : 0,
+      targetX : tempX,
+      targetY : tempY
+    };
+    shapes[i] = tempShape;
+
   }
 
   function makeShapes() {
     var i;
-    var tempX;
-    var tempY;
-    var tempRad;
-    var r1;
-    var g1;
-    var b1;
-    var numColors = 4;
-    var color1;
-    var r2;
-    var g2;
-    var b2;
-    var color2;
-    var tempGrad;
-    var gradFactor = 2;
-    shape_count = 8;
-    radius = theCanvas.width / (3 * (shape_count + 1));
-    baseX = radius * 2;
-    baseY = radius * 2;
     for ( i = 0; i < numShapes; i++) {
-      //tempRad = 5 + Math.floor(Math.random() * 20);
-      tempRad = radius;
-      //position
-      tempX = (i % shape_count) * radius * 3 + baseX;
-      tempY = Math.floor(i / shape_count) * radius * 3 + baseY;
-
-      //Randomize the color gradient. We will select a random color and set the center of the gradient to white.
-      //We will only allow the color components to be as large as 200 (rather than the max 255) to create darker colors.
-      var suit = (Math.floor(Math.random() * numColors) + 1);
-      var rank = (Math.floor(Math.random() * numColors) + 1);
-       
-      var seed = suit / numColors;
-      h1 = Math.floor(seed * 375) - (300 / numColors);
-      s1 = 50 + seed * 40;
-      l1 = 50 + seed * numColors;
-      color1 = "hsl(" + h1 + "," + s1 + "%," + l1 + "%)";
-      //console.log(color1);
-
-      h2 = h1 + 20;
-      s2 = Math.min(Math.floor(gradFactor * s1), 100);
-      l2 = Math.min(Math.floor(gradFactor * l1), 75);
-      color2 = "hsl(" + h2 + "," + s2 + "%," + l2 + "%)";
-
-      tempShape = {
-        x : tempX,
-        y : tempY,
-        rad : tempRad,
-        gradColor1 : color1,
-        gradColor2 : color2,
-        suit : suit,
-        rank : rank
-      };
-      shapes.push(tempShape);
+      makeShape(i);
     }
   }
 
   function repositionShapes() {
+    var i, timer;
     for ( i = 0; i < numShapes; i++) {
       //position
-      shapes[i].x = getX(i);
-      shapes[i].y = getY(i);
+      if (!dragging || (i !== dragIndex && i !== swapIndex)) {
+        // Don't reposition actively moving shapes
+        shapes[i].targetX = getX(i);
+        shapes[i].targetY = getY(i);
+      }
     }
-    drawShapes();
+    drawScreen();
   }
 
   function getX(i) {
-    return (i % shape_count) * radius * 3 + baseX;
+    return (i % rowLength) * radius * 3 + baseX;
   }
 
   function getY(i) {
-    return Math.floor(i / shape_count) * radius * 3 + baseY;
+    return Math.floor(i / rowLength) * radius * 3 + baseY;
   }
 
   function mouseDownListener(evt) {
+    if (paused) {
+      Debugger.log("paused");
+      return;
+    }
     repositionShapes();
     var i;
 
@@ -181,11 +223,7 @@ function canvasApp() {
     if (dragging) {
       window.addEventListener("mousemove", mouseMoveListener, false);
 
-      //We now place the currently dragged shape on top by reordering the array which holds these objects.
-      //We 'splice' out this array element, then 'push' it back into the array at the end.
-      //shapes.push(shapes.splice(dragIndex,1)[0]);
-
-      //shape to drag is now last one in array. We read record the point on this object where the mouse is "holding" it:
+      //We read record the point on this object where the mouse is "holding" it:
       dragHoldX = mouseX - shapes[dragIndex].x;
       dragHoldY = mouseY - shapes[dragIndex].y;
 
@@ -193,9 +231,6 @@ function canvasApp() {
       //set up the code so that this target position is approached gradually, producing a smooth motion.
       targetX = mouseX - dragHoldX;
       targetY = mouseY - dragHoldY;
-
-      //start timer
-      timer = setInterval(onTimerTick, 1000 / 30);
     }
     theCanvas.removeEventListener("mousedown", mouseDownListener, false);
     window.addEventListener("mouseup", mouseUpListener, false);
@@ -212,43 +247,50 @@ function canvasApp() {
   }
 
   function onTimerTick() {
-    repositionShapes(); // Resets shapes to proper locations
+    repositionShapes();
+    // Resets shapes to proper locations
+    console.log("tick");
 
+    if (dragIndex === -1) {
+      return;
+    }
     // Moves selected shape in direction dragged, exactly one space
-    if (Math.abs(targetX - getX(dragIndex)) > Math.abs(targetY - getY(dragIndex))) {
-      if (targetX < getX(dragIndex) && targetX > baseX) {
-        shapes[dragIndex].x = Math.max(targetX, getX(dragIndex) - radius * 3);
-        shapes[dragIndex - 1].x = getX(dragIndex);
-      }
+    if (Math.max(Math.abs(targetX - getX(dragIndex)), Math.abs(targetY - getY(dragIndex))) > radius) {
+      if (Math.abs(targetX - getX(dragIndex)) > Math.abs(targetY - getY(dragIndex))) {
+        if (targetX < getX(dragIndex) && targetX > baseX) {
+          shapes[dragIndex].targetX = Math.max(targetX, getX(dragIndex) - radius * 3);
+          shapes[dragIndex - 1].targetX = getX(dragIndex);
+          swapIndex = dragIndex - 1;
+        }
 
-      if (targetX > getX(dragIndex) && targetX < shape_count * (radius * 3) - radius) {
-        shapes[dragIndex].x = getX(dragIndex) + radius * 3;
-        shapes[dragIndex + 1].x = getX(dragIndex);
-      }
+        if (targetX > getX(dragIndex) && targetX < rowLength * (radius * 3) - radius) {
+          shapes[dragIndex].targetX = getX(dragIndex) + radius * 3;
+          shapes[dragIndex + 1].targetX = getX(dragIndex);
+          swapIndex = dragIndex + 1;
+        }
 
+      } else {
+        if (targetY < getY(dragIndex) && targetY > baseY) {
+          shapes[dragIndex].targetY = getY(dragIndex) - radius * 3;
+          shapes[dragIndex - rowLength].targetY = getY(dragIndex);
+          swapIndex = dragIndex - rowLength;
+        }
+
+        if (targetY > getY(dragIndex) && targetY < rowLength * (radius * 3) - radius) {
+          shapes[dragIndex].targetY = getY(dragIndex) + radius * 3;
+          shapes[dragIndex + rowLength].targetY = getY(dragIndex);
+          swapIndex = dragIndex + rowLength;
+        }
+
+      }
     } else {
-      if (targetY < getY(dragIndex) && targetY > baseY) {
-        shapes[dragIndex].y = getY(dragIndex) - radius * 3;
-        shapes[dragIndex - shape_count].y = getY(dragIndex);
+      swapIndex = dragIndex;
+      if(shapes[dragIndex]) {
+        shapes[dragIndex].targetX = getX(dragIndex);
+        shapes[dragIndex].targetY = getY(dragIndex);
       }
+    }// if movement is at least minimum
 
-      if (targetY > getY(dragIndex) && targetY < shape_count * (radius * 3) - radius) {
-        shapes[dragIndex].y = getY(dragIndex) + radius * 3;
-        shapes[dragIndex + shape_count].y = getY(dragIndex);
-      }
-
-    }
-
-    //shapes[numShapes - 1].x = shapes[numShapes - 1].x + easeAmount * (targetX - shapes[numShapes - 1].x);
-    //shapes[numShapes - 1].y = shapes[numShapes - 1].y + easeAmount * (targetY - shapes[numShapes - 1].y);
-
-    //stop the timer when the target position is reached (close enough)
-    if ((!dragging) && (Math.abs(shapes[numShapes - 1].x - targetX) < 0.1) && (Math.abs(shapes[numShapes - 1].y - targetY) < 0.1)) {
-      shapes[numShapes - 1].x = targetX;
-      shapes[numShapes - 1].y = targetY;
-      //stop timer:
-      clearInterval(timer);
-    }
     drawScreen();
   }
 
@@ -259,6 +301,37 @@ function canvasApp() {
       dragging = false;
       window.removeEventListener("mousemove", mouseMoveListener, false);
     }
+
+    if (swapIndex !== -1 && dragIndex !== -1 && swapIndex != dragIndex) {
+      Debugger.log("Swap", swapIndex, "Drag", dragIndex);
+      swapShapes(swapIndex, dragIndex);
+      if (!check_for_matches(true)) {
+        swapShapes(swapIndex, dragIndex);
+        failed = true;
+        check_for_moves();
+        score -= 100;
+        playSound("sound/bad_move.wav");
+        if (score < 0) {
+          game_over(score, numColors);
+        }
+        Debugger.log("Can't swap those, no match!");
+      }
+
+    }
+    swapIndex = -1;
+    dragIndex = -1;
+  }
+
+  function swapShapes(i, j) {
+    var tempShape;
+    tempShape = copy(shapes[swapIndex]);
+    shapes[i] = shapes[j];
+    shapes[j] = tempShape;
+    playSound("sound/thunk.wav");
+  }
+
+  function copy(obj) {
+    return JSON.parse(JSON.stringify(obj));
   }
 
   function mouseMoveListener(evt) {
@@ -285,7 +358,6 @@ function canvasApp() {
   }
 
   function hitTest(shape, mx, my) {
-
     var dx;
     var dy;
     dx = mx - shape.x;
@@ -298,6 +370,10 @@ function canvasApp() {
     var i;
     for ( i = 0; i < numShapes; i++) {
       drawShape(i, false);
+      //if (dragging) {
+      shapes[i].x = shapes[i].x + easeAmount * (shapes[i].targetX - shapes[i].x);
+      shapes[i].y = shapes[i].y + easeAmount * (shapes[i].targetY - shapes[i].y);
+      //}
     }
     if (dragging) {
       drawShape(dragIndex, true);
@@ -310,7 +386,7 @@ function canvasApp() {
     var y;
     var rad;
     //define gradient
-    rad = shapes[i].rad;
+    rad = shapes[i].rad + radius / 3;
     if (top) {
       rad += 3;
     }
@@ -322,10 +398,16 @@ function canvasApp() {
 
     context.fillStyle = grad;
     context.beginPath();
-    context.arc(x, y, rad, 0, 2 * Math.PI, false);
+    var sides = shapes[i].suit % 2 ? shapes[i].suit + 2 : (numColors - shapes[i].suit) + 4
+    //context.arc(x, y, rad, 0, 2 * Math.PI, false);
+    context.moveTo(x + rad, y);
+    for (var vertex = 1; vertex < sides; vertex += 1) {
+      context.lineTo(x + rad * Math.cos(vertex * 2 * Math.PI / sides), y + rad * Math.sin(vertex * 2 * Math.PI / sides));
+    }
     context.closePath();
     context.fill();
-    context.font = "400 'Caesar+Dressing'";
+    context.font = "400 " + rad + "px sans-serif";
+    // + "'Caesar Dressing'";
     context.fillStyle = "black";
     context.textAlign = "center";
     context.textBaseline = "middle";
@@ -337,10 +419,217 @@ function canvasApp() {
     //bg
     context.fillStyle = bgColor;
     context.fillRect(0, 0, theCanvas.width, theCanvas.height);
-    if (!dragging) {
+    drawShapes();
+    drawScore(score);
+  }
+
+  function drawScore(score) {
+    context.font = "400 " + theCanvas.width / 15 + "px 'Caesar Dressing'";
+    context.fillStyle = "black";
+    context.textAlign = "left";
+    context.textBaseline = "middle";
+    context.fillText("Score " + score, radius, theCanvas.height - radius);
+    if (valid_moves) {
+      context.fillText("C: " + numColors + " R: " + valid_moves.rank + " S: " + valid_moves.suit, theCanvas.width / 2, theCanvas.height - radius);
+    }
+  }
+
+  function canvas_fit() {
+    var winW = 630, winH = 460;
+    if (document.body && document.body.offsetWidth) {
+      winW = document.body.offsetWidth;
+      winH = document.body.offsetHeight;
+    }
+    if (document.compatMode == 'CSS1Compat' && document.documentElement && document.documentElement.offsetWidth) {
+      winW = document.documentElement.offsetWidth;
+      winH = document.documentElement.offsetHeight;
+    }
+    if (window.innerWidth && window.innerHeight) {
+      winW = window.innerWidth;
+      winH = window.innerHeight;
+    }
+    theCanvas.style.display = "inline-block";
+    theCanvas.height = theCanvas.width = Math.min(winW, winH - 150);
+    var canvasW = theCanvas.width;
+    var canvasH = theCanvas.height;
+
+    if (shapes) {
+      radius = getRadius();
+      baseX = baseY = radius * 2;
+      shapes.forEach(function(s) {
+        s.rad = getRadius();
+      });
       repositionShapes();
     }
-    drawShapes();
+  }
+
+
+  window.onresize = function() {
+    canvas_fit();
+    drawScreen();
+  };
+
+  function check_for_moves() {
+    var index, i, j, k, type, types, scored = false, shape1, shape2, shape3;
+    types = ["rank", "suit"];
+    valid_moves = {
+      rank : 0,
+      suit : 0
+    };
+    Debugger.log("checking for moves...");
+    for ( i = 0; i < rowLength; i++) {
+      for ( j = 0; j < rowLength; j++) {
+        for (k in types) {
+          type = types[k];
+          index = i + j * rowLength;
+          if (i < rowLength - 3) {
+            // Check horizontal
+            check_move(shapes[index], shapes[index + 1], shapes[index + 3], type);
+            check_move(shapes[index], shapes[index + 2], shapes[index + 3], type);
+            if (j < rowLength - 1) {
+              check_move(shapes[index], shapes[index + 1 + rowLength], shapes[index + 2], type);
+              check_move(shapes[index + rowLength], shapes[index + 1], shapes[index + 2], type);
+              check_move(shapes[index], shapes[index + 1], shapes[index + 2 + rowLength], type);
+
+              check_move(shapes[index], shapes[index + 1 + rowLength], shapes[index + 2 + rowLength], type);
+              check_move(shapes[index + rowLength], shapes[index + 1 + rowLength], shapes[index + 2], type);
+              check_move(shapes[index], shapes[index + 1 + rowLength], shapes[index + 2 + rowLength], type);
+            }
+
+          }// If there's space to check horizontal
+          if (j < rowLength - 3) {
+            // Check vertical
+            check_move(shapes[index], shapes[index + rowLength], shapes[index + rowLength * 3], type);
+            check_move(shapes[index], shapes[index + rowLength * 2], shapes[index + rowLength * 3], type);
+            if (i < rowLength - 1) {
+              check_move(shapes[index + 1], shapes[index + rowLength], shapes[index + rowLength * 2], type);
+              check_move(shapes[index], shapes[index + rowLength + 1], shapes[index + rowLength * 2], type);
+              check_move(shapes[index], shapes[index + rowLength], shapes[index + rowLength * 2 + 1], type);
+
+              check_move(shapes[index + 1], shapes[index + rowLength + 1], shapes[index + rowLength * 2], type);
+              check_move(shapes[index], shapes[index + rowLength + 1], shapes[index + rowLength * 2 + 1], type);
+              check_move(shapes[index + 1], shapes[index + rowLength], shapes[index + rowLength * 2 + 1], type);
+            }
+          } // If there's space to check vertical
+        } // k in types
+      } // j in length
+    }// i in length
+    if (valid_moves.rank <= 0 && valid_moves.suit <= 0) {
+      game_over(score, numColors);
+    }
+  }
+
+  function check_move(shape1, shape2, shape3, type) {
+    if (shape1[type] && shape2[type] && shape3[type]) {
+      if (shape1[type] === shape2[type] && shape2[type] === shape3[type]) {
+        valid_moves[type] += 1;
+        if (failed) {
+          shape1.gradColor1 = "black";
+          shape2.gradColor1 = "black";
+          shape3.gradColor1 = "black";
+          failed = false;
+        }
+      }
+    }
+  }
+
+  function check_match(shape1, shape2, shape3, type) {
+    if (shape1[type] && shape2[type] && shape3[type]) {
+      if (shape1[type] === shape2[type] && shape2[type] === shape3[type]) {
+        shape1.marked += 1;
+        shape2.marked += 1;
+        shape3.marked += 1;
+      }
+    }
+  }
+
+  function check_for_matches(in_game) {
+    var index, i, j, k, type, types, scored = false, shape1, shape2, shape3;
+    paused = true;
+    types = ["rank", "suit"];
+    Debugger.log("marking...");
+    for ( i = 0; i < rowLength; i++) {
+      for ( j = 0; j < rowLength; j++) {
+        for (k in types) {
+          type = types[k];
+          index = i + j * rowLength;
+          if (i < rowLength - 2) {
+            // Check horizontal
+            check_match(shapes[index], shapes[index + 1], shapes[index + 2], type);
+          }// If there's space to check horizontal
+          if (j < rowLength - 2) {
+            // Check vertical
+            check_match(shapes[index], shapes[index + rowLength], shapes[index + rowLength * 2], type);
+          } // If there's space to check vertical
+        } // k in types
+      } // j in length
+    }// i in length
+
+    Debugger.log("scoring...");
+    for ( i = 0; i < shapes.length; i++) {
+      if (shapes[i].marked > 0) {
+        shapes[i].gradColor1 = "white";
+        //shapes[i].gradColor2 = "black";
+        scored = true;
+        if (in_game) {
+          score += shapes[i].marked ^ 2;
+        }
+      } else {
+        var grad = getGrad(shapes[i].suit);
+        shapes[i].gradColor1 = grad[0];
+        shapes[i].gradColor2 = grad[1];
+      }
+    }
+
+    drawScreen();
+
+    numColors = Math.floor(score / 100 + 4);
+
+    if (scored) {
+      if (in_game) {
+        playSound("sound/destruct.wav");
+        Debugger.log("setting timer...");
+      }
+      var timeout = in_game ? 300 : 0;
+      setTimeout(function() {
+        recheck_matches(in_game);
+      }, timeout);
+      return true;
+    } else {
+      Debugger.log("unpausing...");
+      paused = false;
+      check_for_moves();
+      drawScreen();
+      return false;
+    }
+
+  }// check_for_matches
+
+  function recheck_matches(in_game) {
+    clear_marked();
+    if (in_game)
+      playSound("sound/thunk.wav");
+    check_for_matches(in_game);
+
+  }
+
+  function clear_marked() {
+    Debugger.log("clearing...");
+    var i, j;
+    for ( i = numShapes - 1; i >= 0; i--) {
+      while (shapes[i].marked) {
+        for ( j = i; j >= 0; j -= rowLength) {
+          if (shapes[j - rowLength]) {
+            shapes[j] = copy(shapes[j - rowLength]);
+            shapes[j].y -= radius * 3;
+            makeShape(j - rowLength);
+          } else {
+            makeShape(j);
+            shapes[j].y -= radius * 3;
+          }
+        }
+      }
+    }
   }
 
 }
