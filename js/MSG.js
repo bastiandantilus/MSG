@@ -35,7 +35,7 @@ function MSG(rowLength) {"use strict";
 
   var context = theCanvas.getContext("2d");
 
-  var score, failed, paused, valid_moves, numColors, numShapes, rowLength, radius, baseX, baseY, shapes;
+  var score, failed, paused, valid_moves, numColors, numShapes, radius, baseX, baseY, shapes;
 
   var dragIndex;
 
