@@ -563,58 +563,57 @@ function MSG(rowLength) {"use strict";
             // __X
             // XX_
             check_move(shapes[midLeft], shapes[midMid], shapes[topRight], type);
+
+          }// end If there's space to check horizontal
+
+          if (j < rowLength - 3) {
+            // Check vertical
+            // X
+            // X
+            // _
+            // X
+            check_move(shapes[topLeft], shapes[midLeft], shapes[farBotLeft], type);
+            // X
+            // _
+            // X
+            // X
+            check_move(shapes[topLeft], shapes[botLeft], shapes[farBotLeft], type);
           }
+          if (j < rowLength - 2 && i < rowLength - 1) {
+            // _X
+            // X_
+            // X_
+            check_move(shapes[topMid], shapes[midLeft], shapes[botLeft], type);
+            // X_
+            // _X
+            // X_
+            check_move(shapes[topLeft], shapes[midMid], shapes[botLeft], type);
+            // X_
+            // X_
+            // _X
+            check_move(shapes[topLeft], shapes[midLeft], shapes[botMid], type);
+            // X_
+            // _X
+            // _X
+            check_move(shapes[topLeft], shapes[midMid], shapes[botMid], type);
+            // _X
+            // X_
+            // _X
+            check_move(shapes[topMid], shapes[midLeft], shapes[botMid], type);
+            // _X
+            // _X
+            // X_
+            check_move(shapes[topMid], shapes[midMid], shapes[botMid], type);
+          }
+        } // endIf there's space to check vertical
+      } // k in types
+    } // j in length
 
-        }// end If there's space to check horizontal
+  }// i in length
 
-        if (j < rowLength - 3) {
-          // Check vertical
-          // X
-          // X
-          // _
-          // X
-          check_move(shapes[topLeft], shapes[midLeft], shapes[farBotLeft], type);
-          // X
-          // _
-          // X
-          // X
-          check_move(shapes[topLeft], shapes[botLeft], shapes[farBotLeft], type);
-        }
-        if (j < rowLength - 2 && i < rowLength - 1) {
-          // _X
-          // X_
-          // X_
-          check_move(shapes[topMid], shapes[midLeft], shapes[botLeft], type);
-          // X_
-          // _X
-          // X_
-          check_move(shapes[topLeft], shapes[midMid], shapes[botLeft], type);
-          // X_
-          // X_
-          // _X
-          check_move(shapes[topLeft], shapes[midLeft], shapes[botMid], type);
-          // X_
-          // _X
-          // _X
-          check_move(shapes[topLeft], shapes[midMid], shapes[botMid], type);
-          // _X
-          // X_
-          // _X
-          check_move(shapes[topMid], shapes[midLeft], shapes[botMid], type);
-          // _X
-          // _X
-          // X_
-          check_move(shapes[topMid], shapes[midMid], shapes[botMid], type);
-        }
-      } // endIf there's space to check vertical
-    } // k in types
-  } // j in length
-
-}// i in length
-
-if (valid_moves.rank <= 0 && valid_moves.suit <= 0) {
-  game_over(score, numColors);
-}
+  if (valid_moves.rank <= 0 && valid_moves.suit <= 0) {
+    game_over(score, numColors);
+  }
 }
 
 function check_move(shape1, shape2, shape3, type) {
