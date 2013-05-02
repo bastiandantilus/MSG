@@ -728,5 +728,3 @@ function clear_marked() {
     }
   }
 }
-
-}
