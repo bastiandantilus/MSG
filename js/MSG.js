@@ -579,6 +579,7 @@ function MSG(rowLength) {"use strict";
             // X
             check_move(shapes[topLeft], shapes[botLeft], shapes[farBotLeft], type);
           }
+
           if (j < rowLength - 2 && i < rowLength - 1) {
             // _X
             // X_
@@ -604,127 +605,129 @@ function MSG(rowLength) {"use strict";
             // _X
             // X_
             check_move(shapes[topMid], shapes[midMid], shapes[botMid], type);
-          }
-        } // endIf there's space to check vertical
-      } // k in types
-    } // j in length
+          } // endIf there's space to check vertical
 
-  }// i in length
+        } // k in types
+      } // j in length
 
-  if (valid_moves.rank <= 0 && valid_moves.suit <= 0) {
-    game_over(score, numColors);
-  }
-}
+    }// i in length
 
-function check_move(shape1, shape2, shape3, type) {
-  if (shape1[type] && shape2[type] && shape3[type]) {
-    if (shape1[type] === shape2[type] && shape2[type] === shape3[type]) {
-      valid_moves[type] += 1;
-      if (failed) {
-        shape1.gradColor1 = "black";
-        shape2.gradColor1 = "black";
-        shape3.gradColor1 = "black";
-        failed = false;
-      }
-    }
-  }
-}
-
-function check_match(shape1, shape2, shape3, type) {
-  if (shape1[type] && shape2[type] && shape3[type]) {
-    if (shape1[type] === shape2[type] && shape2[type] === shape3[type]) {
-      shape1.marked += 1;
-      shape2.marked += 1;
-      shape3.marked += 1;
-    }
-  }
-}
-
-function check_for_matches(in_game) {
-  var index, i, j, k, type, types, scored = false, shape1, shape2, shape3;
-  paused = true;
-  types = ["rank", "suit"];
-  Debugger.log("marking...");
-  for ( i = 0; i < rowLength; i++) {
-    for ( j = 0; j < rowLength; j++) {
-      for (k in types) {
-        type = types[k];
-        index = i + j * rowLength;
-        if (i < rowLength - 2) {
-          // Check horizontal
-          check_match(shapes[index], shapes[index + 1], shapes[index + 2], type);
-        }// If there's space to check horizontal
-        if (j < rowLength - 2) {
-          // Check vertical
-          check_match(shapes[index], shapes[index + rowLength], shapes[index + rowLength * 2], type);
-        } // If there's space to check vertical
-      } // k in types
-    } // j in length
-  }// i in length
-
-  Debugger.log("scoring...");
-  for ( i = 0; i < shapes.length; i++) {
-    if (shapes[i].marked > 0) {
-      shapes[i].gradColor1 = "white";
-      //shapes[i].gradColor2 = "black";
-      scored = true;
-      if (in_game) {
-        score += shapes[i].marked ^ 2;
-      }
-    } else {
-      var grad = getGrad(shapes[i].suit);
-      shapes[i].gradColor1 = grad[0];
-      shapes[i].gradColor2 = grad[1];
+    if (valid_moves.rank <= 0 && valid_moves.suit <= 0) {
+      game_over(score, numColors);
     }
   }
 
-  drawScreen();
-
-  numColors = Math.floor(score / 100 + 4);
-
-  if (scored) {
-    if (in_game) {
-      playSound("sound/destruct.wav");
-      Debugger.log("setting timer...");
-    }
-    var timeout = in_game ? 300 : 0;
-    setTimeout(function() {
-      recheck_matches(in_game);
-    }, timeout);
-    return true;
-  } else {
-    Debugger.log("unpausing...");
-    paused = false;
-    check_for_moves();
-    drawScreen();
-    return false;
-  }
-
-}// check_for_matches
-
-function recheck_matches(in_game) {
-  clear_marked();
-  if (in_game)
-    playSound("sound/thunk.wav");
-  check_for_matches(in_game);
-
-}
-
-function clear_marked() {
-  Debugger.log("clearing...");
-  var i, j;
-  for ( i = numShapes - 1; i >= 0; i--) {
-    while (shapes[i].marked) {
-      for ( j = i; j >= 0; j -= rowLength) {
-        if (shapes[j - rowLength]) {
-          shapes[j] = copy(shapes[j - rowLength]);
-          shapes[j].y -= radius * 3;
-          makeShape(j - rowLength);
-        } else {
-          makeShape(j);
-          shapes[j].y -= radius * 3;
+  function check_move(shape1, shape2, shape3, type) {
+    if (shape1[type] && shape2[type] && shape3[type]) {
+      if (shape1[type] === shape2[type] && shape2[type] === shape3[type]) {
+        valid_moves[type] += 1;
+        if (failed) {
+          shape1.gradColor1 = "black";
+          shape2.gradColor1 = "black";
+          shape3.gradColor1 = "black";
+          failed = false;
         }
       }
     }
   }
+
+  function check_match(shape1, shape2, shape3, type) {
+    if (shape1[type] && shape2[type] && shape3[type]) {
+      if (shape1[type] === shape2[type] && shape2[type] === shape3[type]) {
+        shape1.marked += 1;
+        shape2.marked += 1;
+        shape3.marked += 1;
+      }
+    }
+  }
+
+  function check_for_matches(in_game) {
+    var index, i, j, k, type, types, scored = false, shape1, shape2, shape3;
+    paused = true;
+    types = ["rank", "suit"];
+    Debugger.log("marking...");
+    for ( i = 0; i < rowLength; i++) {
+      for ( j = 0; j < rowLength; j++) {
+        for (k in types) {
+          type = types[k];
+          index = i + j * rowLength;
+          if (i < rowLength - 2) {
+            // Check horizontal
+            check_match(shapes[index], shapes[index + 1], shapes[index + 2], type);
+          }// If there's space to check horizontal
+          if (j < rowLength - 2) {
+            // Check vertical
+            check_match(shapes[index], shapes[index + rowLength], shapes[index + rowLength * 2], type);
+          } // If there's space to check vertical
+        } // k in types
+      } // j in length
+    }// i in length
+
+    Debugger.log("scoring...");
+    for ( i = 0; i < shapes.length; i++) {
+      if (shapes[i].marked > 0) {
+        shapes[i].gradColor1 = "white";
+        //shapes[i].gradColor2 = "black";
+        scored = true;
+        if (in_game) {
+          score += shapes[i].marked ^ 2;
+        }
+      } else {
+        var grad = getGrad(shapes[i].suit);
+        shapes[i].gradColor1 = grad[0];
+        shapes[i].gradColor2 = grad[1];
+      }
+    }
+
+    drawScreen();
+
+    numColors = Math.floor(score / 100 + 4);
+
+    if (scored) {
+      if (in_game) {
+        playSound("sound/destruct.wav");
+        Debugger.log("setting timer...");
+      }
+      var timeout = in_game ? 300 : 0;
+      setTimeout(function() {
+        recheck_matches(in_game);
+      }, timeout);
+      return true;
+    } else {
+      Debugger.log("unpausing...");
+      paused = false;
+      check_for_moves();
+      drawScreen();
+      return false;
+    }
+
+  }// check_for_matches
+
+  function recheck_matches(in_game) {
+    clear_marked();
+    if (in_game)
+      playSound("sound/thunk.wav");
+    check_for_matches(in_game);
+
+  }
+
+  function clear_marked() {
+    Debugger.log("clearing...");
+    var i, j;
+    for ( i = numShapes - 1; i >= 0; i--) {
+      while (shapes[i].marked) {
+        for ( j = i; j >= 0; j -= rowLength) {
+          if (shapes[j - rowLength]) {
+            shapes[j] = copy(shapes[j - rowLength]);
+            shapes[j].y -= radius * 3;
+            makeShape(j - rowLength);
+          } else {
+            makeShape(j);
+            shapes[j].y -= radius * 3;
+          }
+        }
+      }
+    }
+  }
+
 }
