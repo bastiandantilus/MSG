@@ -5,7 +5,7 @@
 var Debugger = function() {"use strict";
 };
 Debugger.log = function() {"use strict";
-  //return;
+  return;
   try {
     console.log(arguments);
   } catch (exception) {
@@ -425,7 +425,7 @@ function MSG(rowLength) {"use strict";
     var x;
     var y;
     var rad;
-    //define gradient
+    //define suit gradient
     rad = shapes[i].rad + radius / 3;
     if (top) {
       rad += 3;
@@ -438,20 +438,38 @@ function MSG(rowLength) {"use strict";
 
     context.fillStyle = grad;
     context.beginPath();
+
+    // draw suit polygon
     var sides = shapes[i].suit % 2 ? shapes[i].suit + 2 : (numColors - shapes[i].suit) + 4
-    //context.arc(x, y, rad, 0, 2 * Math.PI, false);
-    context.moveTo(x + rad, y);
-    for (var vertex = 1; vertex < sides; vertex += 1) {
-      context.lineTo(x + rad * Math.cos(vertex * 2 * Math.PI / sides), y + rad * Math.sin(vertex * 2 * Math.PI / sides));
+    var initial = 0; // (.25 * Math.PI)
+    for (var vertex = 0; vertex < sides; vertex += 1) {
+      context.lineTo(x + rad * Math.cos(vertex * 2 * Math.PI / sides + initial), y + rad * Math.sin(vertex * 2 * Math.PI / sides + initial));
     }
     context.closePath();
     context.fill();
-    context.font = "400 " + rad + "px sans-serif";
-    // + "'Caesar Dressing'";
+    
+    // draw rank outline?
+    /*
+    context.lineWidth = shapes[i].rank*2;
+    context.strokeStyle = "hsl(" + shapes[i].rank * (360 / numColors) + " , 50%, 85% )";
+    context.stroke(); */
+    
+    // draw rank hint
+    /* context.beginPath();
+    context.fillStyle = "hsl(" + shapes[i].rank * (360 / numColors) + " , 50%, 85%)";
+    context.arc(x, y, rad / 2.5, 0, 2 * Math.PI, false);
+    context.closePath();
+    context.fill(); */
+    
+    // draw rank number
+    
+    context.font = "400 " + (rad + shapes[i].rank)+ "px sans-serif";
     context.fillStyle = "black";
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.fillText(shapes[i].rank, shapes[i].x, shapes[i].y);
+    for(var xx = 0; xx < shapes[i].rank; xx += 1 ) {
+      context.fillText(shapes[i].rank, shapes[i].x+xx*0.2, shapes[i].y);
+    }
 
   }
 
@@ -511,7 +529,7 @@ function MSG(rowLength) {"use strict";
 
   function check_for_moves() {
     var index, i, j, k, type, types, scored = false, shape1, shape2, shape3;
-    var topLeft, topMid, topRight, topFarRight, midLeft, midMid, midRight, botLeft, botMid, botRight
+    var topLeft, topMid, topRight, topFarRight, midLeft, midMid, midRight, botLeft, botMid, botRight, farBotLeft, farBotMid, farBotRight
     types = ["rank", "suit"];
     valid_moves = {
       rank : 0,
